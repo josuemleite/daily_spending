@@ -8,7 +8,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final expenseController = ExpenseController(prefs);
-  
+
   runApp(MyApp(expenseController: expenseController));
 }
 

@@ -16,21 +16,41 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String _selectedPeriod = 'daily';
+  List<String> _selectedCategories = [];
   List<Expense> _expenses = [];
+  List<String> _availableCategories = [];
   double _totalAmount = 0;
+  bool _isDropdownOpen = false;
 
   @override
   void initState() {
     super.initState();
+    _loadCategories();
     _loadExpenses();
   }
 
-  Future<void> _loadExpenses() async {
-    final expenses = await widget.controller.getFilteredExpenses(_selectedPeriod);
-    double total = expenses.fold(0, (sum, expense) => sum + expense.value);
-    
+  Future<void> _loadCategories() async {
+    final categories = await widget.controller.getCategories();
     setState(() {
-      _expenses = expenses;
+      _availableCategories = categories;
+    });
+  }
+
+  Future<void> _loadExpenses() async {
+    final expenses =
+        await widget.controller.getFilteredExpenses(_selectedPeriod);
+
+    final filteredExpenses = _selectedCategories.isEmpty
+        ? expenses
+        : expenses
+            .where((e) => _selectedCategories.contains(e.category))
+            .toList();
+
+    double total =
+        filteredExpenses.fold(0, (sum, expense) => sum + expense.value);
+
+    setState(() {
+      _expenses = filteredExpenses;
       _totalAmount = total;
     });
   }
@@ -40,13 +60,15 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: AppStyles.backgroundColor,
       appBar: AppBar(
-        title: Text('Controle de Gastos', style: TextStyle(color: Colors.white)),
+        title:
+            Text('Controle de Gastos', style: TextStyle(color: Colors.white)),
         backgroundColor: AppStyles.primaryColor,
         elevation: 0,
       ),
       body: Column(
         children: [
           _buildFilterSection(),
+          _buildCategoryFilter(),
           _buildTotalSection(),
           Expanded(child: _buildExpensesList()),
         ],
@@ -56,13 +78,14 @@ class _HomePageState extends State<HomePage> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddExpensePage(controller: widget.controller),
+              builder: (context) =>
+                  AddExpensePage(controller: widget.controller),
             ),
           );
           _loadExpenses();
         },
         backgroundColor: AppStyles.primaryColor,
-        foregroundColor: AppStyles.accentColor,
+        foregroundColor: Colors.white,
         child: Icon(Icons.add),
       ),
     );
@@ -129,6 +152,112 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilter() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Filtrar por categorias:',
+            style: AppStyles.labelStyle,
+          ),
+          SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isDropdownOpen = !_isDropdownOpen;
+              });
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                    color: AppStyles.textSecondaryColor.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(Icons.category_outlined,
+                            color: AppStyles.textSecondaryColor),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _selectedCategories.isEmpty
+                                ? 'Selecione as categorias'
+                                : _selectedCategories.join(', '),
+                            style: AppStyles.bodyStyle,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(
+                          _isDropdownOpen
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          color: AppStyles.textSecondaryColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_isDropdownOpen)
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                              color: AppStyles.textSecondaryColor
+                                  .withOpacity(0.3)),
+                        ),
+                      ),
+                      child: Column(
+                        children: _availableCategories.map((category) {
+                          bool isSelected =
+                              _selectedCategories.contains(category);
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected) {
+                                  _selectedCategories.remove(category);
+                                } else {
+                                  _selectedCategories.add(category);
+                                }
+                                _loadExpenses();
+                              });
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isSelected
+                                        ? Icons.check_box
+                                        : Icons.check_box_outline_blank,
+                                    color: isSelected
+                                        ? AppStyles.primaryColor
+                                        : AppStyles.textSecondaryColor,
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(category, style: AppStyles.bodyStyle),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

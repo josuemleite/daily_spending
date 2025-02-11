@@ -74,7 +74,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 controller: _descriptionController,
                 decoration: AppStyles.textFieldDecoration.copyWith(
                   labelText: 'Descrição',
-                  prefixIcon: Icon(Icons.description_outlined, color: AppStyles.textSecondaryColor),
+                  prefixIcon: Icon(Icons.description_outlined,
+                      color: AppStyles.textSecondaryColor),
                 ),
                 validator: (value) =>
                     value?.isEmpty ?? true ? 'Campo obrigatório' : null,
@@ -86,7 +87,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 decoration: AppStyles.textFieldDecoration.copyWith(
                   labelText: 'Valor',
                   prefixText: 'R\$ ',
-                  prefixIcon: Icon(Icons.attach_money, color: AppStyles.textSecondaryColor),
+                  prefixIcon: Icon(Icons.attach_money,
+                      color: AppStyles.textSecondaryColor),
                 ),
                 validator: _validatePrice,
               ),
@@ -113,8 +115,17 @@ class _AddExpensePageState extends State<AddExpensePage> {
           value: _selectedCategory,
           decoration: AppStyles.textFieldDecoration.copyWith(
             labelText: 'Categoria',
-            prefixIcon: Icon(Icons.category_outlined, color: AppStyles.textSecondaryColor),
+            prefixIcon: Icon(Icons.category_outlined,
+                color: AppStyles.textSecondaryColor),
           ),
+          selectedItemBuilder: (BuildContext context) {
+            return [
+              ..._categories.map(
+                  (category) => Text(category, style: AppStyles.bodyStyle)),
+              Text('Nova categoria',
+                  style: TextStyle(color: AppStyles.primaryColor)),
+            ];
+          },
           items: [
             ..._categories.map((category) => DropdownMenuItem(
                   value: category,
@@ -123,15 +134,20 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     children: [
                       Text(category, style: AppStyles.bodyStyle),
                       IconButton(
-                        icon: Icon(Icons.delete_outline, 
+                        icon: Icon(
+                          Icons.delete_outline,
                           color: AppStyles.textSecondaryColor,
                           size: 20,
                         ),
                         onPressed: () async {
-                          bool removed = await widget.controller.removeCategory(category);
+                          Navigator.pop(context); // Fecha o dropdown
+                          bool removed =
+                              await widget.controller.removeCategory(category);
                           if (removed) {
-                            await _loadCategories();
+                            final categories =
+                                await widget.controller.getCategories();
                             setState(() {
+                              _categories = categories;
                               if (_selectedCategory == category) {
                                 _selectedCategory = null;
                               }
@@ -145,7 +161,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Não é possível remover uma categoria que possui gastos'),
+                                content: Text(
+                                    'Não é possível remover uma categoria que possui gastos'),
                                 backgroundColor: AppStyles.errorColor,
                               ),
                             );
@@ -161,7 +178,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 children: [
                   Icon(Icons.add_circle_outline, color: AppStyles.primaryColor),
                   SizedBox(width: 8),
-                  Text('Nova categoria', style: TextStyle(color: AppStyles.primaryColor)),
+                  Text('Nova categoria',
+                      style: TextStyle(color: AppStyles.primaryColor)),
                 ],
               ),
             ),

@@ -10,7 +10,8 @@ class ExpenseController {
   ExpenseController(this._prefs);
 
   Future<List<String>> getCategories() async {
-    return _prefs.getStringList(_categoriesKey) ?? ['Alimentação', 'Transporte', 'Lazer'];
+    return _prefs.getStringList(_categoriesKey) ??
+        ['Alimentação', 'Transporte', 'Lazer'];
   }
 
   Future<void> addCategory(String category) async {
@@ -33,8 +34,8 @@ class ExpenseController {
         case 'weekly':
           return difference.inDays <= 7;
         case 'monthly':
-          return expense.date.year == now.year && 
-                 expense.date.month == now.month;
+          return expense.date.year == now.year &&
+              expense.date.month == now.month;
         case 'semiannual':
           return difference.inDays <= 180;
         case 'yearly':
@@ -56,7 +57,7 @@ class ExpenseController {
   Future<void> addExpense(Expense expense) async {
     List<Expense> expenses = await getExpenses();
     expenses.add(expense);
-    
+
     final String data = jsonEncode(expenses.map((e) => e.toJson()).toList());
     await _prefs.setString(_expensesKey, data);
   }
@@ -64,13 +65,12 @@ class ExpenseController {
   Future<Map<String, double>> getFilteredTotals(String period) async {
     List<Expense> expenses = await getExpenses();
     DateTime now = DateTime.now();
-    
+
     expenses = expenses.where((expense) {
       if (period == 'weekly') {
         return now.difference(expense.date).inDays <= 7;
       } else if (period == 'monthly') {
-        return expense.date.year == now.year && 
-               expense.date.month == now.month;
+        return expense.date.year == now.year && expense.date.month == now.month;
       } else {
         return expense.date.year == now.year;
       }
@@ -78,16 +78,17 @@ class ExpenseController {
 
     Map<String, double> totals = {};
     for (var expense in expenses) {
-      totals[expense.category] = (totals[expense.category] ?? 0) + expense.value;
+      totals[expense.category] =
+          (totals[expense.category] ?? 0) + expense.value;
     }
-    
+
     return totals;
   }
 
   Future<void> removeExpense(String id) async {
     List<Expense> expenses = await getExpenses();
     expenses.removeWhere((expense) => expense.id == id);
-    
+
     final String data = jsonEncode(expenses.map((e) => e.toJson()).toList());
     await _prefs.setString(_expensesKey, data);
   }
@@ -95,7 +96,7 @@ class ExpenseController {
   Future<bool> removeCategory(String category) async {
     List<Expense> expenses = await getExpenses();
     bool hasExpenses = expenses.any((expense) => expense.category == category);
-    
+
     if (hasExpenses) {
       return false;
     }
